@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Alarm } from "./alarm";
+import { Player } from "./player";
 
 describe("Alarm", () => {
   it("est inactive par défaut", () => {
@@ -17,19 +18,21 @@ describe("Alarm", () => {
 });
 
 describe("Alarm - désactivation avec code", () => {
-  it("se désactive avec le bon code", () => {
+  it("se désactive si le joueur possède le bon code", () => {
     const alarm = new Alarm(true, "1234");
+    const player = new Player(["1234"]);
 
-    const success = alarm.deactivate("1234");
+    const success = alarm.deactivate(player);
 
-    expect(success).toBe(true); // le code est bon, l'alarme se désactive
+    expect(success).toBe(true); // le joueur a le bon code, l'alarme se désactive
     expect(alarm.isActive()).toBe(false);
   });
 
-  it("ne se désactive pas avec un mauvais code", () => {
-    const alarm = new Alarm(true, "1234"); // alarme avec un vrai code défini
+  it("ne se désactive pas si le joueur n'a pas le bon code", () => {
+    const alarm = new Alarm(true, "1234");
+    const player = new Player(["0000"]); // mauvais code dans l'inventaire
 
-    const success = alarm.deactivate("0000"); // mauvais code fourni
+    const success = alarm.deactivate(player);
 
     expect(success).toBe(false); // mauvais code, l'alarme reste active
     expect(alarm.isActive()).toBe(true);
@@ -38,29 +41,23 @@ describe("Alarm - désactivation avec code", () => {
   it("permet d'avoir plusieurs alarmes avec des codes différents", () => {
     const alarmA = new Alarm(true, "1234");
     const alarmB = new Alarm(true, "5678");
+    const player = new Player(["5678"]);
 
-    expect(alarmA.deactivate("5678")).toBe(false); // le code de B ne marche pas sur A
+    expect(alarmA.deactivate(player)).toBe(false); // le code de B ne marche pas sur A
     expect(alarmA.isActive()).toBe(true);
-
-    expect(alarmA.deactivate("1234")).toBe(true);
-    expect(alarmB.deactivate("5678")).toBe(true);
+    expect(alarmB.deactivate(player)).toBe(true); // le bon code pour B
   });
 });
 
-describe("Alarm - utilisation du code depuis une liste d'objets", () => {
-  it("retire le code de la liste d'objets une fois utilisé et désactive l'alarme", () => {
+describe("Alarm - retrait du code de l'inventaire", () => {
+  it("retire le code de l'inventaire du joueur une fois utilisé", () => {
     const alarm = new Alarm(true, "1234");
-    const items = ["1234", "torch"];
-    const codeIndex = items.indexOf("1234");
+    const player = new Player(["1234", "torch"]);
 
-    const success = alarm.deactivate(items[codeIndex]);
-    if (success) {
-      items.splice(codeIndex, 1); // le code est consommé une fois utilisé
-    }
+    alarm.deactivate(player);
 
-    expect(success).toBe(true);
     expect(alarm.isActive()).toBe(false); // l'alarme est bien désactivée
-    expect(items).not.toContain("1234");
-    expect(items).toContain("torch"); // les autres objets sont conservés
+    expect(player.inventory).not.toContain("1234"); // le code est consommé
+    expect(player.inventory).toContain("torch"); // les autres objets sont conservés
   });
 });

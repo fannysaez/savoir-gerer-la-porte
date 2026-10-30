@@ -1,4 +1,5 @@
 import { Alarm } from "./alarm";
+import { Player } from "./player";
 
 export class Door {
   private isOpen: boolean; // indique si la porte est actuellement ouverte
@@ -15,7 +16,6 @@ export class Door {
     riddleAnswer: string | null = null,
     alarm: Alarm | null = null,
   ) {
-    // initialise l'état de la porte, la clé et l'énigme
     this.isOpen = isOpen; // définit l'état initial de la porte
     this.requiredKey = requiredKey; // mémorise la clé nécessaire pour ouvrir la porte
     this.riddleAnswer = riddleAnswer; // mémorise la réponse correcte de l'énigme
@@ -26,18 +26,18 @@ export class Door {
 
   // Ouvre la porte si le joueur possède la clé requise (ou si aucune clé n'est nécessaire)
   // Si une clé est utilisée, elle est retirée de l'inventaire du joueur
-  open(playerKeys: string[]): boolean {
-    //la méthode retourne un booleen
+  open(player: Player): boolean {
     if (this.requiredKey === null) {
-      this.isOpen = true; // on ouvre la porte
-      return true; // aucune clé requise, la porte s'ouvre directement
+      this.isOpen = true; // aucune clé requise, la porte s'ouvre directement
+      return true;
     }
-    const keyIndex = playerKeys.indexOf(this.requiredKey); // position de la clé dans l'inventaire
-    if (keyIndex === -1) {
+
+    const hasKey = player.removeItem(this.requiredKey); // vérifie et retire la clé en une seule étape
+
+    if (!hasKey) {
       return false; // le joueur n'a pas la bonne clé, la porte reste fermée
     }
 
-    playerKeys.splice(keyIndex, 1); //retire la clé utilisée de l'inventaire
     this.isOpen = true;
     return true;
   }

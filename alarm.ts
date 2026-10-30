@@ -1,3 +1,5 @@
+import { Player } from "./player";
+
 export class Alarm {
   private active: boolean; // indique si l'alarme est actuellement active
   private code: string; // code propre à cette alarme, permet d'avoir plusieurs alarmes avec des codes différents
@@ -18,10 +20,12 @@ export class Alarm {
     return this.active;
   }
 
-  // Désactive l'alarme si le code fourni correspond au code attendu par cette alarme
-  deactivate(code: string): boolean {
-    if (code !== this.code) {
-      return false; // mauvais code, l'alarme reste active
+  // Désactive l'alarme si le joueur possède le code attendu par cette alarme (le code est alors consommé)
+  deactivate(player: Player): boolean {
+    const hasCode = player.removeItem(this.code); // vérifie et retire le code en une seule étape
+
+    if (!hasCode) {
+      return false; // le joueur n'a pas le bon code, l'alarme reste active
     }
 
     this.active = false;

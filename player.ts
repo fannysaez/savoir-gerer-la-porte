@@ -5,7 +5,7 @@ export class Player {
 
   // crée un joueur avec un inventaire (vide par defaut)
   constructor(inventory: string[] = []) {
-    this.inventory = inventory; // initialise l’inventaire du joueur
+    this.inventory = inventory; // initialise l'inventaire du joueur
   }
 
   //Ramasse un objet présent dans la salle : l'ajoute à l'inventaire et la retire de la salle
@@ -20,6 +20,7 @@ export class Player {
     this.inventory.push(item); //ajoute l'objet à l'inventaire du joueur
     return true;
   }
+
   // Vérifie que le joueur possède l'objet avant de l'utiliser
   use(item: string): boolean {
     const itemIndex = this.inventory.indexOf(item); // position de l'objet dans l'inventaire
@@ -29,5 +30,17 @@ export class Player {
     }
 
     return true; // le joueur possède l'objet, il peut l'utiliser
+  }
+
+  // Retire un objet de l'inventaire s'il y est présent (utilisé par Door/Alarm pour consommer clés et codes)
+  removeItem(item: string): boolean {
+    const itemIndex = this.inventory.indexOf(item); // position de l'objet dans l'inventaire
+
+    if (itemIndex === -1) {
+      return false; // le joueur ne possède pas l'objet, rien à retirer
+    }
+
+    this.inventory.splice(itemIndex, 1); // retire l'objet de l'inventaire
+    return true;
   }
 }
