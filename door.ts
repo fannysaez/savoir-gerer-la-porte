@@ -47,7 +47,7 @@ export class Door {
     return this.failedAttempts;
   }
 
-  // vérifie si la porte est franchie (ouverte, et énigme résolue si elle en a une)
+  // vérifie si la porte est franchie (ouverte, et énigme résolue si elle en a une, et alarme inactive si elle en a une)
   canBeCrossed(): boolean {
     if (!this.isOpen) {
       return false;
@@ -60,6 +60,7 @@ export class Door {
     }
     return true;
   }
+
   // Tente de résoudre l'énigme avec la réponse fournie par le joueur
   solveRiddle(answer: string): boolean {
     if (this.riddleSolved) {

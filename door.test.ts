@@ -12,39 +12,38 @@ describe("Door", () => {
   it("peut être franchie lorsqu'elle est ouverte", () => {
     const door = new Door(true); // ouverte
 
-    // Une porte ouverte peut être franchie.
     expect(door.canBeCrossed()).toBe(true);
   });
 });
 
 describe("Door avec une clé", () => {
-  it("peut être ouverte si le joueur possède la bonne clé", () => {
+  it("peut être ouverte si la liste d'objets fournie contient la bonne clé", () => {
     const door = new Door(false, "red-key"); // fermée, nécessite la clé rouge
     const success = door.open(["red-key"]);
 
-    expect(success).toBe(true); // open() réussit, le joueur a la bonne clé
+    expect(success).toBe(true); // open() réussit, la bonne clé est fournie
     expect(door.canBeCrossed()).toBe(true); // la porte est ouverte, donc franchissable
   });
 
-  it("ne peut pas être ouverte si le joueur ne possède pas la bonne clé", () => {
+  it("ne peut pas être ouverte si la liste d'objets fournie ne contient pas la bonne clé", () => {
     const door = new Door(false, "red-key"); // fermée, nécessite la clé rouge
-    const success = door.open(["blue-key"]); // le joueur a la mauvaise clée
+    const success = door.open(["blue-key"]); // mauvaise clé fournie
 
-    expect(success).toBe(false); // open() échoue, le joueur n'a pas la bonne clé
+    expect(success).toBe(false); // open() échoue, la bonne clé n'est pas fournie
     expect(door.canBeCrossed()).toBe(false); // la porte reste fermée, donc infranchissable
   });
 });
 
-describe("Door - retrait de la clé de l'inventaire", () => {
-  it("retire la clé de l'inventaire une fois la porte ouverte", () => {
+describe("Door - retrait de la clé utilisée", () => {
+  it("retire la clé utilisée de la liste d'objets fournie une fois la porte ouverte", () => {
     const door = new Door(false, "red-key");
-    const inventory = ["red-key", "torch"];
+    const items = ["red-key", "torch"];
 
-    door.open(inventory);
+    door.open(items);
 
-    expect(door.canBeCrossed()).toBe(true); //la porte est ouverte
-    expect(inventory).not.toContain("red-key"); //la clé utilisée est retirée
-    expect(inventory).toContain("torch"); // les autres objets sont conservés
+    expect(door.canBeCrossed()).toBe(true); // la porte est ouverte
+    expect(items).not.toContain("red-key"); // la clé utilisée est retirée
+    expect(items).toContain("torch"); // les autres objets sont conservés
   });
 });
 
@@ -72,7 +71,8 @@ describe("Door avec une énigme", () => {
   it("peut être franchie si l'énigme est résolue", () => {
     const door = new Door(true, null, "azur");
     door.solveRiddle("azur");
-    expect(door.canBeCrossed()).toBe(true); // la porte est ouverte est l'énigme est résolue
+
+    expect(door.canBeCrossed()).toBe(true); // la porte est ouverte et l'énigme est résolue
   });
 });
 
@@ -89,6 +89,8 @@ describe("Door - énigme avec tentatives", () => {
     door.solveRiddle("rouge");
     door.solveRiddle("vert");
 
+    expect(door.getFailedAttempts()).toBe(2); // vérifie la cohérence du nombre d'échecs
+
     const solved = door.solveRiddle("azur");
 
     expect(solved).toBe(true); // 2 échecs seulement, la bonne réponse fonctionne encore
@@ -100,6 +102,8 @@ describe("Door - énigme avec tentatives", () => {
     door.solveRiddle("vert");
     door.solveRiddle("jaune");
 
+    expect(door.getFailedAttempts()).toBe(3);
+
     const solved = door.solveRiddle("azur");
 
     expect(solved).toBe(false); // énigme verrouillée après 3 échecs
@@ -107,11 +111,14 @@ describe("Door - énigme avec tentatives", () => {
 
   it("ne peut pas résoudre une énigme déjà résolue une seconde fois", () => {
     const door = new Door(true, null, "azur");
-    door.solveRiddle("azur"); // première résolution, réussie
+    const firstSolve = door.solveRiddle("azur"); // première résolution, réussie
 
-    const solved = door.solveRiddle("azur"); // deuxième tentative
+    expect(firstSolve).toBe(true);
+    expect(door.canBeCrossed()).toBe(true); // la porte est bien ouverte et franchissable
 
-    expect(solved).toBe(false); // déjà résolue, ne peut pas l'être une seconde fois
+    const secondSolve = door.solveRiddle("azur"); // deuxième tentative
+
+    expect(secondSolve).toBe(false); // déjà résolue, ne peut pas l'être une seconde fois
   });
 });
 
@@ -140,27 +147,25 @@ describe("Door avec une alarme", () => {
   });
 
   it("une porte bloquée redevient franchissable une fois l'alarme désactivée", () => {
-  const alarm = new Alarm();
-  alarm.activate();
-  const door = new Door(true, null, null, alarm);
-  const inventory = ["alarm-code"];
+    const alarm = new Alarm(true, "alarm-code");
+    const door = new Door(true, null, null, alarm);
 
-  alarm.deactivate(inventory);
+    alarm.deactivate("alarm-code");
 
-  expect(door.canBeCrossed()).toBe(true); // l'alarme est désactivée, la porte redevient franchissable
-});
+    expect(door.canBeCrossed()).toBe(true); // l'alarme est désactivée, la porte redevient franchissable
+  });
 });
 
 describe("Door du laboratoire - conditions combinées", () => {
   it("ne peut pas être franchie si aucune condition n'est remplie", () => {
-    const alarm = new Alarm(true); // alarme active par défaut
+    const alarm = new Alarm(true, "lab-code"); // alarme active par défaut
     const door = new Door(false, "lab-key", "labyrinthe", alarm);
 
     expect(door.canBeCrossed()).toBe(false);
   });
 
   it("ne peut pas être franchie avec uniquement la clé", () => {
-    const alarm = new Alarm(true);
+    const alarm = new Alarm(true, "lab-code");
     const door = new Door(false, "lab-key", "labyrinthe", alarm);
     door.open(["lab-key"]);
 
@@ -168,7 +173,7 @@ describe("Door du laboratoire - conditions combinées", () => {
   });
 
   it("ne peut pas être franchie avec uniquement l'énigme résolue", () => {
-    const alarm = new Alarm(true);
+    const alarm = new Alarm(true, "lab-code");
     const door = new Door(false, "lab-key", "labyrinthe", alarm);
     door.solveRiddle("labyrinthe");
 
@@ -176,15 +181,15 @@ describe("Door du laboratoire - conditions combinées", () => {
   });
 
   it("ne peut pas être franchie avec uniquement l'alarme désactivée", () => {
-    const alarm = new Alarm(true);
+    const alarm = new Alarm(true, "lab-code");
     const door = new Door(false, "lab-key", "labyrinthe", alarm);
-    alarm.deactivate(["alarm-code"]);
+    alarm.deactivate("lab-code");
 
     expect(door.canBeCrossed()).toBe(false);
   });
 
   it("ne peut pas être franchie avec clé + énigme seulement", () => {
-    const alarm = new Alarm(true);
+    const alarm = new Alarm(true, "lab-code");
     const door = new Door(false, "lab-key", "labyrinthe", alarm);
     door.open(["lab-key"]);
     door.solveRiddle("labyrinthe");
@@ -193,29 +198,29 @@ describe("Door du laboratoire - conditions combinées", () => {
   });
 
   it("ne peut pas être franchie avec clé + alarme désactivée seulement", () => {
-    const alarm = new Alarm(true);
+    const alarm = new Alarm(true, "lab-code");
     const door = new Door(false, "lab-key", "labyrinthe", alarm);
     door.open(["lab-key"]);
-    alarm.deactivate(["alarm-code"]);
+    alarm.deactivate("lab-code");
 
     expect(door.canBeCrossed()).toBe(false);
   });
 
   it("ne peut pas être franchie avec énigme + alarme désactivée seulement", () => {
-    const alarm = new Alarm(true);
+    const alarm = new Alarm(true, "lab-code");
     const door = new Door(false, "lab-key", "labyrinthe", alarm);
     door.solveRiddle("labyrinthe");
-    alarm.deactivate(["alarm-code"]);
+    alarm.deactivate("lab-code");
 
     expect(door.canBeCrossed()).toBe(false);
   });
 
   it("peut être franchie quand les trois conditions sont réunies", () => {
-    const alarm = new Alarm(true);
+    const alarm = new Alarm(true, "lab-code");
     const door = new Door(false, "lab-key", "labyrinthe", alarm);
     door.open(["lab-key"]);
     door.solveRiddle("labyrinthe");
-    alarm.deactivate(["alarm-code"]);
+    alarm.deactivate("lab-code");
 
     expect(door.canBeCrossed()).toBe(true);
   });
